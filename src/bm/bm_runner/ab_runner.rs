@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::time::Instant;
 
-use chess::{Board, ChessMove};
+use chess::{Board, ChessMove, Color, Piece, Square};
 
 use crate::bm::bm_eval::eval::Evaluation;
 use crate::bm::bm_runner::ab_consts::*;
@@ -186,12 +186,13 @@ pub struct LocalContext {
     eval: Evaluation,
     eval_stack: Vec<Evaluation>,
     skip_moves: Vec<Option<ChessMove>>,
-    variation: Vec<Option<ChessMove>>,
+    variation: Vec<Option<(Color, Piece, Square)>>,
     sel_depth: u32,
     h_table: HistoryTable,
     ch_table: HistoryTable,
     cm_table: CounterMoveTable,
     cm_hist: DoubleMoveHistory,
+    fu_hist: DoubleMoveHistory,
     killer_moves: Vec<MoveEntry<{ SEARCH_PARAMS.get_k_move_cnt() }>>,
     threat_moves: Vec<MoveEntry<{ SEARCH_PARAMS.get_threat_move_cnt() }>>,
     nodes: u32,
@@ -247,6 +248,11 @@ impl LocalContext {
     }
 
     #[inline]
+    pub fn get_fu_hist(&self) -> &DoubleMoveHistory {
+        &self.fu_hist
+    }
+
+    #[inline]
     pub fn get_h_table_mut(&mut self) -> &mut HistoryTable {
         &mut self.h_table
     }
@@ -264,6 +270,11 @@ impl LocalContext {
     #[inline]
     pub fn get_cm_hist_mut(&mut self) -> &mut DoubleMoveHistory {
         &mut self.cm_hist
+    }
+
+    #[inline]
+    pub fn get_fu_hist_mut(&mut self) -> &mut DoubleMoveHistory {
+        &mut self.fu_hist
     }
 
     #[inline]
@@ -287,7 +298,7 @@ impl LocalContext {
     }
 
     #[inline]
-    pub fn push_move(&mut self, make_move: Option<ChessMove>, ply: u32) {
+    pub fn push_move(&mut self, make_move: Option<(Color, Piece, Square)>, ply: u32) {
         if ply as usize >= self.variation.len() {
             self.variation.push(make_move);
         } else {
@@ -296,7 +307,7 @@ impl LocalContext {
     }
 
     #[inline]
-    pub fn get_move(&self, ply: u32) -> Option<Option<ChessMove>> {
+    pub fn get_move(&self, ply: u32) -> Option<Option<(Color, Piece, Square)>> {
         self.variation.get(ply as usize).copied()
     }
 
@@ -490,6 +501,7 @@ impl AbRunner {
                 ch_table: HistoryTable::new(),
                 cm_table: CounterMoveTable::new(),
                 cm_hist: DoubleMoveHistory::new(),
+                fu_hist: DoubleMoveHistory::new(),
                 killer_moves: vec![],
                 threat_moves: vec![],
                 tt_hits: 0,

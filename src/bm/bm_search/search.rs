@@ -252,18 +252,13 @@ pub fn search<Search: SearchType>(
         MoveEntry::new()
     };
 
-    let prev_move = if ply != 0 {
-        local_context.get_move(ply - 1)
-    } else {
-        None
-    };
+    let prev_move = local_context.get_move(ply - 1);
+    let stm_prev_move = local_context.get_move(ply - 2);
 
-    let counter_move = if let Some(Some(prev_move)) = prev_move {
-        local_context.get_cm_table().get(
-            board.side_to_move(),
-            board.piece_on(prev_move.get_dest()).unwrap(),
-            prev_move.get_dest(),
-        )
+    let counter_move = if let Some(Some((_, piece, dest))) = prev_move {
+        local_context
+            .get_cm_table()
+            .get(board.side_to_move(), piece, dest)
     } else {
         None
     };
@@ -273,6 +268,7 @@ pub fn search<Search: SearchType>(
         best_move,
         counter_move,
         prev_move.unwrap_or(None),
+        stm_prev_move.unwrap_or(None),
         threat_move_entry.into_iter(),
         local_context.get_k_table()[ply as usize].into_iter(),
     );
@@ -283,9 +279,11 @@ pub fn search<Search: SearchType>(
     let mut quiets = ArrayVec::<ChessMove, 64>::new();
     let mut captures = ArrayVec::<ChessMove, 64>::new();
 
-    while let Some(make_move) =
-        move_gen.next(local_context.get_h_table(), local_context.get_cm_hist())
-    {
+    while let Some(make_move) = move_gen.next(
+        local_context.get_h_table(),
+        local_context.get_cm_hist(),
+        local_context.get_fu_hist(),
+    ) {
         if Some(make_move) == skip_move {
             continue;
         }
@@ -352,7 +350,14 @@ pub fn search<Search: SearchType>(
                 }
             }
             position.make_move(make_move);
-            local_context.push_move(Some(make_move), ply);
+            local_context.push_move(
+                Some((
+                    board.side_to_move(),
+                    board.piece_on(make_move.get_source()).unwrap(),
+                    make_move.get_dest(),
+                )),
+                ply,
+            );
 
             let gives_check = *position.board().checkers() != EMPTY;
             if gives_check {
@@ -405,7 +410,14 @@ pub fn search<Search: SearchType>(
             }
 
             position.make_move(make_move);
-            local_context.push_move(Some(make_move), ply);
+            local_context.push_move(
+                Some((
+                    board.side_to_move(),
+                    board.piece_on(make_move.get_source()).unwrap(),
+                    make_move.get_dest(),
+                )),
+                ply,
+            );
 
             let gives_check = *position.board().checkers() != EMPTY;
             if gives_check {
@@ -519,13 +531,18 @@ pub fn search<Search: SearchType>(
                         local_context
                             .get_h_table_mut()
                             .cutoff(&board, make_move, &quiets, depth);
-                        if let Some(Some(prev_move)) = prev_move {
+                        if let Some(Some((_, piece, to))) = prev_move {
                             local_context
                                 .get_cm_table_mut()
-                                .cutoff(&board, prev_move, make_move, depth);
+                                .cutoff(&board, piece, to, make_move, depth);
                             local_context
                                 .get_cm_hist_mut()
-                                .cutoff(&board, prev_move, make_move, &quiets, depth);
+                                .cutoff(&board, piece, to, make_move, &quiets, depth);
+                        }
+                        if let Some(Some((_, piece, to))) = stm_prev_move {
+                            local_context
+                                .get_fu_hist_mut()
+                                .cutoff(&board, piece, to, make_move, &quiets, depth);
                         }
                     } else {
                         local_context

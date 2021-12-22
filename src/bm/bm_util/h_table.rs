@@ -72,16 +72,16 @@ impl CounterMoveTable {
     pub fn cutoff(
         &mut self,
         board: &Board,
-        prev_move: ChessMove,
+        piece: Piece,
+        to: Square,
         cutoff_move: ChessMove,
         amt: u32,
     ) {
         if amt > 20 {
             return;
         }
-        let piece = board.piece_on(prev_move.get_dest()).unwrap();
         let piece_index = piece_index(board.side_to_move(), piece);
-        let to_index = prev_move.get_dest().to_index();
+        let to_index = to.to_index();
         self.table[piece_index][to_index] = Some(cutoff_move);
     }
 }
@@ -116,7 +116,8 @@ impl DoubleMoveHistory {
     pub fn cutoff(
         &mut self,
         board: &Board,
-        prev_move: ChessMove,
+        prev_piece: Piece,
+        prev_to: Square,
         make_move: ChessMove,
         fails: &[ChessMove],
         amt: u32,
@@ -124,9 +125,8 @@ impl DoubleMoveHistory {
         if amt > 20 {
             return;
         }
-        let prev_piece = board.piece_on(prev_move.get_dest()).unwrap();
         let prev_index = piece_index(board.side_to_move(), prev_piece);
-        let prev_to_index = prev_move.get_dest().to_index();
+        let prev_to_index = prev_to.to_index();
 
         let piece = board.piece_on(make_move.get_source()).unwrap();
         let index = piece.to_index();
