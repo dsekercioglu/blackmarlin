@@ -410,7 +410,7 @@ pub fn search<Search: SearchType>(
                 continue;
             }
 
-            let do_cmh_p = !Search::PV && depth <= 8 && eval <= alpha;
+            let do_cmh_p = !Search::PV && depth <= 4 && eval <= alpha;
             if let Some(cmh_score) = cmh_score {
                 if do_cmh_p && !is_capture && (cmh_score as i32) < history_prune_margin {
                     continue;
