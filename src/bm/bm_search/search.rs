@@ -166,7 +166,7 @@ pub fn search<Search: SearchType>(
         We can safely return evaluation
         */
         let alpha_margin = (depth as i16) * 150;
-        if depth <= 7 && eval + alpha_margin < alpha {
+        if depth <= 7 && eval + alpha_margin <= alpha {
             return (None, eval);
         }
 
