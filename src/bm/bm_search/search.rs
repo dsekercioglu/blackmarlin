@@ -309,6 +309,19 @@ pub fn search<Search: SearchType>(
                 make_move.to,
             )
         };
+        let cmh_score = if let Some(Some(prev_move)) = prev_move {
+            let piece = board.piece_on(make_move.from).unwrap();
+            let prev_move_piece = board.piece_on(prev_move.to).unwrap_or(Piece::King);
+            Some(local_context.get_cm_hist().get(
+                board.side_to_move(),
+                prev_move_piece,
+                prev_move.to,
+                piece,
+                make_move.to,
+            ))
+        } else {
+            None
+        };
 
         let mut extension = 0;
         let mut score;
@@ -386,14 +399,22 @@ pub fn search<Search: SearchType>(
                 continue;
             }
 
+            let history_prune_margin = -h_table::MAX_VALUE * ((depth * depth) as i32) / 64;
             /*
             In low depth, non-PV nodes, we assume it's safe to prune a move
             if it has very low history
             */
             let do_hp = !Search::PV && depth <= 8 && eval <= alpha;
 
-            if do_hp && (h_score as i32) < (-h_table::MAX_VALUE * ((depth * depth) as i32) / 64) {
+            if do_hp && (h_score as i32) < history_prune_margin {
                 continue;
+            }
+
+            let do_cmh_p = !Search::PV && depth <= 8 && eval <= alpha;
+            if let Some(cmh_score) = cmh_score {
+                if do_cmh_p && !is_capture && (cmh_score as i32) < history_prune_margin {
+                    continue;
+                }
             }
 
             /*
