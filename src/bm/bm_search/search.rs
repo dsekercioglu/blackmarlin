@@ -161,6 +161,16 @@ pub fn search<Search: SearchType>(
         }
 
         /*
+        Alpha Pruning:
+        If in a non PV node and evaluation is considerably lower than alpha,
+        We can safely return evaluation
+        */
+        let alpha_margin = (depth as i16) * 150;
+        if depth <= 7 && eval + alpha_margin < alpha {
+            return (None, eval);
+        }
+
+        /*
         Null Move Pruning:
         If in a non PV node and we can still achieve beta at a reduced depth after
         giving the opponent the side to move we can prune this node and return the evaluation
