@@ -185,7 +185,7 @@ pub fn search<Search: SearchType>(
         }
     }
 
-    if tt_entry.is_none() && depth >= 4 {
+    if !Search::PV && tt_entry.is_none() && depth >= 4 {
         depth -= 1;
     }
 
