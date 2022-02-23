@@ -402,7 +402,7 @@ impl AbRunner {
                         pv: [None; MAX_PLY as usize + 1],
                         pv_len: 0,
                     };
-                    MAX_PLY as usize
+                    MAX_PLY as usize + 1
                 ],
                 sel_depth: 0,
                 h_table: HistoryTable::new(),

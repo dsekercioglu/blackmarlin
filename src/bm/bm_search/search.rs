@@ -106,6 +106,11 @@ const fn q_see_threshold() -> i16 {
     200
 }
 
+#[inline]
+fn hist_extend(depth: u32, history: i16) -> bool {
+    depth > 4 && history > 337
+}
+
 pub fn search<Search: SearchType>(
     position: &mut Position,
     local_context: &mut LocalContext,
@@ -352,6 +357,8 @@ pub fn search<Search: SearchType>(
             let gives_check = position.board().checkers() != BitBoard::EMPTY;
             if gives_check {
                 extension += 1;
+            } else if !Search::PV && !is_capture && hist_extend(depth, h_score) {
+                extension += 1;
             }
 
             /*
@@ -418,6 +425,8 @@ pub fn search<Search: SearchType>(
             local_context.search_stack_mut()[ply as usize].move_played = Some(make_move);
             let gives_check = position.board().checkers() != BitBoard::EMPTY;
             if gives_check {
+                extension += 1;
+            } else if !Search::PV && !is_capture && hist_extend(depth, h_score) {
                 extension += 1;
             }
 
