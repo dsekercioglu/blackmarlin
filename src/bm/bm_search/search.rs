@@ -349,6 +349,8 @@ pub fn search<Search: SearchType>(
                         */
                         return s_beta;
                     }
+                } else if !Search::PV && !is_capture && hist_extend(depth, h_score) {
+                    extension += 1;
                 }
             }
             position.make_move(make_move);
@@ -356,8 +358,6 @@ pub fn search<Search: SearchType>(
 
             let gives_check = position.board().checkers() != BitBoard::EMPTY;
             if gives_check {
-                extension += 1;
-            } else if !Search::PV && !is_capture && hist_extend(depth, h_score) {
                 extension += 1;
             }
 
@@ -425,8 +425,6 @@ pub fn search<Search: SearchType>(
             local_context.search_stack_mut()[ply as usize].move_played = Some(make_move);
             let gives_check = position.board().checkers() != BitBoard::EMPTY;
             if gives_check {
-                extension += 1;
-            } else if !Search::PV && !is_capture && hist_extend(depth, h_score) {
                 extension += 1;
             }
 
