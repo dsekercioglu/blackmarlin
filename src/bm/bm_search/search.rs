@@ -57,8 +57,8 @@ const fn do_razor(depth: u32) -> bool {
 }
 
 #[inline]
-const fn razor() -> i16 {
-    250
+const fn razor(depth: u32) -> i16 {
+    250 * depth as i16
 }
 
 #[inline]
@@ -205,7 +205,7 @@ pub fn search<Search: SearchType>(
     };
 
     if !Search::PV && !in_check && skip_move.is_none() {
-        if do_razor(depth) && eval + razor() <= alpha {
+        if do_razor(depth) && eval + razor(depth) <= alpha {
             let q_score = q_search(pos, local_context, shared_context, ply, alpha, beta);
             if q_score <= alpha {
                 return q_score;
