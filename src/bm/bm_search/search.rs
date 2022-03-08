@@ -52,6 +52,16 @@ const fn rev_fp(depth: u32, improving: bool) -> i16 {
 }
 
 #[inline]
+const fn do_razor(depth: u32) -> bool {
+    depth <= 3
+}
+
+#[inline]
+const fn razor() -> i16 {
+    250
+}
+
+#[inline]
 fn do_nmp<Search: SearchType>(board: &Board, depth: u32, eval: i16, beta: i16) -> bool {
     Search::NM
         && depth > 4
@@ -195,6 +205,13 @@ pub fn search<Search: SearchType>(
     };
 
     if !Search::PV && !in_check && skip_move.is_none() {
+        if do_razor(depth) && eval + razor() <= alpha {
+            let q_score = q_search(pos, local_context, shared_context, ply, alpha, beta);
+            if q_score <= alpha {
+                return q_score;
+            }
+        }
+
         /*
         Reverse Futility Pruning:
         If in a non PV node and evaluation is higher than beta + a depth dependent margin
