@@ -407,9 +407,16 @@ pub fn search<Search: SearchType>(
         local_context.search_stack_mut()[ply as usize].move_played = Some(make_move);
         local_context.search_stack_mut()[ply as usize].is_capture = is_capture;
         let gives_check = pos.board().checkers() != BitBoard::EMPTY;
+
+        let is_recapture = if let Some(Some(prev_move)) = prev_move {
+            prev_is_capture && prev_move.to == make_move.to
+        } else {
+            false
+        };
+
         if gives_check {
             extension += 1;
-        } else if Search::PV && prev_is_capture && is_capture && depth >= 7 {
+        } else if Search::PV && is_recapture && depth >= 7 {
             extension += 1;
         }
 
