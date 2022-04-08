@@ -170,6 +170,9 @@ impl<const K: usize> OrderedMoveGen<K> {
                     let mut score = 0;
                     let piece = board.piece_on(make_move.from).unwrap();
 
+                    if tactics::threatens(board, make_move) {
+                        score += 256;
+                    }
                     score += hist.get(board.side_to_move(), piece, make_move.to);
                     if let Some(prev_move) = self.prev_move {
                         let prev_move_piece = board.piece_on(prev_move.to).unwrap_or(Piece::King);

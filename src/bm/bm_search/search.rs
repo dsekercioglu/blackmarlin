@@ -12,7 +12,7 @@ use crate::bm::bm_util::t_table::{Analysis, EntryType};
 
 use super::move_gen::OrderedMoveGen;
 use super::move_gen::QuiescenceSearchMoveGen;
-use super::tactics::{is_discovery, see, threatens};
+use super::tactics::see;
 
 pub trait SearchType {
     const NM: bool;
@@ -294,9 +294,6 @@ pub fn search<Search: SearchType>(
             .colors(!pos.board().side_to_move())
             .has(make_move.to);
 
-        let tactical = is_discovery(pos.board(), make_move)
-            && (is_capture || threatens(pos.board(), make_move));
-
         let h_score = if is_capture {
             local_context.get_ch_table().get(
                 pos.board().side_to_move(),
@@ -365,7 +362,7 @@ pub fn search<Search: SearchType>(
         In non-PV nodes If a move isn't good enough to beat alpha - a static margin
         we assume it's safe to prune this move
         */
-        let do_fp = !Search::PV && moves_seen > 0 && !is_capture && !tactical && depth <= 7;
+        let do_fp = !Search::PV && moves_seen > 0 && !is_capture && depth <= 7;
 
         if do_fp && eval + fp(depth) <= alpha {
             continue;
@@ -389,7 +386,7 @@ pub fn search<Search: SearchType>(
         In low depth, non-PV nodes, we assume it's safe to prune a move
         if it has very low history
         */
-        let do_hp = !Search::PV && moves_seen > 0 && depth <= 8 && !tactical && eval <= alpha;
+        let do_hp = !Search::PV && moves_seen > 0 && depth <= 8 && eval <= alpha;
 
         if do_hp && (h_score as i32) < hp(depth) {
             continue;
@@ -399,7 +396,7 @@ pub fn search<Search: SearchType>(
         In non-PV nodes If a move evaluated by SEE isn't good enough to beat alpha - a static margin
         we assume it's safe to prune this move
         */
-        let do_see_prune = !Search::PV && moves_seen > 0 && !in_check && !tactical && depth <= 7;
+        let do_see_prune = !Search::PV && moves_seen > 0 && !in_check && depth <= 7;
         if do_see_prune && eval + see::<16>(pos.board(), make_move) + see_fp(depth) <= alpha {
             continue;
         }

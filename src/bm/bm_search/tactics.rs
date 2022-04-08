@@ -1,26 +1,5 @@
 use cozy_chess::{BitBoard, Board, Color, Move, Piece, Square};
 
-pub fn is_discovery(board: &Board, make_move: Move) -> bool {
-    let stm = board.side_to_move();
-    let opp_king = board.king(!stm);
-    let opp_king_attacks = cozy_chess::get_king_moves(opp_king);
-    if opp_king_attacks.has(make_move.to) {
-        return false;
-    }
-
-    let mut board = board.clone();
-    board.play_unchecked(make_move);
-    if board.checkers() == BitBoard::EMPTY {
-        return false;
-    }
-    for sq in board.checkers() {
-        if sq != make_move.to {
-            return true;
-        }
-    }
-    false
-}
-
 pub fn threatens(board: &Board, make_move: Move) -> bool {
     let piece = board.piece_on(make_move.from).unwrap();
     let stm = board.side_to_move();
