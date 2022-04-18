@@ -195,6 +195,16 @@ pub fn search<Search: SearchType>(
     };
 
     if !Search::PV && !in_check && skip_move.is_none() {
+        if let Some(entry) = tt_entry {
+            if depth <= 7
+                && entry.depth() + 2 >= depth
+                && matches!(entry.entry_type(), EntryType::LowerBound | EntryType::Exact)
+            {
+                if entry.score() >= beta + 100 {
+                    return entry.score();
+                }
+            }
+        }
         /*
         Reverse Futility Pruning:
         If in a non PV node and evaluation is higher than beta + a depth dependent margin
