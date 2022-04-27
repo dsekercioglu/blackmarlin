@@ -199,7 +199,7 @@ pub fn search<Search: SearchType>(
             if depth <= 4
                 && entry.depth() + 2 >= depth
                 && matches!(entry.entry_type(), EntryType::LowerBound | EntryType::Exact)
-                && entry.score() + 200 >= beta
+                && entry.score() >= beta
                 && pos.board().is_legal(entry.table_move())
             {
                 pos.make_move(entry.table_move());
@@ -208,7 +208,7 @@ pub fn search<Search: SearchType>(
                     local_context,
                     shared_context,
                     ply,
-                    depth,
+                    depth - 1,
                     alpha >> Next,
                     beta >> Next,
                 ) << Next;
