@@ -195,6 +195,27 @@ pub fn search<Search: SearchType>(
     };
 
     if !Search::PV && !in_check && skip_move.is_none() {
+        if let Some(entry) = tt_entry {
+            if depth <= 4
+                && entry.depth() + 2 >= depth
+                && matches!(entry.entry_type(), EntryType::LowerBound | EntryType::Exact)
+                && entry.score() + 200 >= beta
+                && pos.board().is_legal(entry.table_move())
+            {
+                pos.make_move(entry.table_move());
+                let score = search::<Search>(
+                    pos,
+                    local_context,
+                    shared_context,
+                    ply,
+                    depth,
+                    alpha >> Next,
+                    beta >> Next,
+                ) << Next;
+                pos.unmake_move();
+                return score;
+            }
+        }
         /*
         Reverse Futility Pruning:
         If in a non PV node and evaluation is higher than beta + a depth dependent margin
