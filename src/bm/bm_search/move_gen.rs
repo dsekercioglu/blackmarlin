@@ -11,7 +11,7 @@ const THRESHOLD: i16 = -(2_i16.pow(10));
 const LOSING_CAPTURE: i16 = -(2_i16.pow(12));
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-enum GenType {
+pub enum GenType {
     PvMove,
     CalcCaptures,
     Captures,
@@ -88,7 +88,7 @@ impl<const K: usize> OrderedMoveGen<K> {
         hist: &HistoryTable,
         c_hist: &HistoryTable,
         cm_hist: &DoubleMoveHistory,
-    ) -> Option<Move> {
+    ) -> (Option<Move>, GenType) {
         self.set_phase();
         if self.gen_type == GenType::PvMove {
             self.gen_type = GenType::CalcCaptures;
@@ -99,7 +99,7 @@ impl<const K: usize> OrderedMoveGen<K> {
                     }
                     for mv in piece_moves {
                         if mv == pv_move {
-                            return Some(pv_move);
+                            return (Some(pv_move), GenType::PvMove);
                         }
                     }
                 }
@@ -139,7 +139,7 @@ impl<const K: usize> OrderedMoveGen<K> {
                 }
             }
             if let Some(index) = best_index {
-                return Some(self.captures.swap_remove(index).0);
+                return (Some(self.captures.swap_remove(index).0), GenType::Captures);
             } else {
                 self.gen_type = if self.skip_quiets {
                     GenType::BadCaptures
@@ -196,7 +196,7 @@ impl<const K: usize> OrderedMoveGen<K> {
                     .position(|(cmp_move, _)| make_move == *cmp_move);
                 if let Some(position) = position {
                     self.quiets.swap_remove(position);
-                    return Some(make_move);
+                    return (Some(make_move), GenType::Killer);
                 }
             }
             self.gen_type = GenType::CounterMove;
@@ -210,7 +210,7 @@ impl<const K: usize> OrderedMoveGen<K> {
                     .position(|(cmp_move, _)| counter_move == *cmp_move);
                 if let Some(position) = position {
                     self.quiets.swap_remove(position);
-                    return Some(counter_move);
+                    return (Some(counter_move), GenType::CounterMove);
                 }
             }
         }
@@ -224,7 +224,7 @@ impl<const K: usize> OrderedMoveGen<K> {
                 }
             }
             if let Some(index) = best_index {
-                return Some(self.quiets.swap_remove(index).0);
+                return (Some(self.quiets.swap_remove(index).0), GenType::Quiet);
             } else {
                 self.gen_type = GenType::BadCaptures;
             };
@@ -238,9 +238,12 @@ impl<const K: usize> OrderedMoveGen<K> {
             }
         }
         if let Some(index) = best_index {
-            Some(self.captures.swap_remove(index).0)
+            (
+                Some(self.captures.swap_remove(index).0),
+                GenType::BadCaptures,
+            )
         } else {
-            None
+            (None, GenType::BadCaptures)
         }
     }
 }

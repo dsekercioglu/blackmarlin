@@ -10,8 +10,8 @@ use crate::bm::bm_util::position::Position;
 use crate::bm::bm_util::t_table::EntryType::{Exact, LowerBound, UpperBound};
 use crate::bm::bm_util::t_table::{Analysis, EntryType};
 
-use super::move_gen::OrderedMoveGen;
 use super::move_gen::QuiescenceSearchMoveGen;
+use super::move_gen::{GenType, OrderedMoveGen};
 
 pub trait SearchType {
     const NM: bool;
@@ -276,7 +276,7 @@ pub fn search<Search: SearchType>(
     let mut quiets = ArrayVec::<Move, 64>::new();
     let mut captures = ArrayVec::<Move, 64>::new();
 
-    while let Some(make_move) = move_gen.next(
+    while let (Some(make_move), gen_type) = move_gen.next(
         pos.board(),
         local_context.get_h_table(),
         local_context.get_ch_table(),
@@ -437,6 +437,9 @@ pub fn search<Search: SearchType>(
             };
             if improving {
                 reduction -= 1;
+            }
+            if matches!(gen_type, GenType::BadCaptures) {
+                reduction += 1;
             }
             reduction = reduction.min(depth as i16 - 2).max(0);
         }
