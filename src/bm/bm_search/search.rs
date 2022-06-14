@@ -349,7 +349,7 @@ pub fn search<Search: SearchType>(
                     if s_beta + 250 <= alpha {
                         return alpha;
                     }
-                    extension = 1;
+                    extension = if Search::PV && depth <= 4 { 2 } else { 1 };
                 } else if multi_cut && s_beta >= beta {
                     /*
                     Multi-cut:
@@ -412,7 +412,7 @@ pub fn search<Search: SearchType>(
         shared_context.get_t_table().prefetch(pos.board());
         local_context.search_stack_mut()[ply as usize].move_played = Some(make_move);
         let gives_check = pos.board().checkers() != BitBoard::EMPTY;
-        if gives_check {
+        if gives_check && extension == 0 {
             extension = 1;
         }
 
