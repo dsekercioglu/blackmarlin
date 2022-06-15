@@ -113,6 +113,7 @@ pub fn search<Search: SearchType>(
     mut depth: u32,
     mut alpha: Evaluation,
     beta: Evaluation,
+    cut_node: bool,
 ) -> Evaluation {
     local_context.search_stack_mut()[ply as usize].pv_len = 0;
 
@@ -223,6 +224,7 @@ pub fn search<Search: SearchType>(
                 nmp_depth(depth, eval.raw(), beta.raw()),
                 zw,
                 zw + 1,
+                !cut_node,
             );
             pos.unmake_move();
             let score = search_score << Next;
@@ -339,6 +341,7 @@ pub fn search<Search: SearchType>(
                         depth / 2 - 1,
                         s_beta - 1,
                         s_beta,
+                        cut_node,
                     )
                 } else {
                     eval
@@ -445,6 +448,9 @@ pub fn search<Search: SearchType>(
             {
                 reduction -= 1;
             }
+            if cut_node {
+                reduction += 1;
+            }
             reduction = reduction.min(depth as i16 - 2).max(0);
         }
 
@@ -459,6 +465,7 @@ pub fn search<Search: SearchType>(
                 depth - 1 + extension,
                 beta >> Next,
                 alpha >> Next,
+                !Search::PV,
             );
             score = search_score << Next;
         } else {
@@ -473,6 +480,7 @@ pub fn search<Search: SearchType>(
                 lmr_depth - 1 + extension,
                 zw - 1,
                 zw,
+                true,
             );
             score = lmr_score << Next;
 
@@ -489,6 +497,7 @@ pub fn search<Search: SearchType>(
                     depth - 1 + extension,
                     zw - 1,
                     zw,
+                    !cut_node,
                 );
                 score = zw_score << Next;
             }
@@ -504,6 +513,7 @@ pub fn search<Search: SearchType>(
                     depth - 1 + extension,
                     beta >> Next,
                     alpha >> Next,
+                    false,
                 );
                 score = search_score << Next;
             }
