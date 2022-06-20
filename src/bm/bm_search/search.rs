@@ -359,6 +359,10 @@ pub fn search<Search: SearchType>(
                     return s_beta;
                 }
             }
+            if !Search::PV && moves_seen == 0 && !is_capture && h_score >= h_table::MAX_VALUE as i16
+            {
+                extension = 1;
+            }
         }
 
         let non_mate_line = highest_score.map_or(false, |s: Evaluation| !s.is_mate());
