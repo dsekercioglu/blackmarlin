@@ -359,7 +359,10 @@ pub fn search<Search: SearchType>(
                     return s_beta;
                 }
             }
-            if !Search::PV && moves_seen == 0 && !is_capture && h_score >= h_table::MAX_VALUE as i16
+            if !Search::PV
+                && moves_seen == 0
+                && !is_capture
+                && h_score >= h_table::MAX_VALUE as i16 / 2
             {
                 extension = 1;
             }
