@@ -242,7 +242,7 @@ pub fn search<Search: SearchType>(
                 }
             }
         }
-        let prob_beta = beta + 100;
+        let prob_beta = beta + 75;
         if depth > 4
             && !tt_entry.map_or(false, |entry| {
                 entry.depth() >= depth - 3 && entry.score() < prob_beta
