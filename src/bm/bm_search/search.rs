@@ -255,8 +255,9 @@ pub fn search<Search: SearchType>(
                 local_context.search_stack_mut()[ply as usize].move_played = Some(make_move);
                 pos.make_move(make_move);
 
-                let zw = beta >> Next;
-                let mut score = q_search(pos, local_context, shared_context, ply + 1, zw, zw + 1);
+                let zw = prob_beta >> Next;
+                let mut score =
+                    q_search(pos, local_context, shared_context, ply + 1, zw, zw + 1) << Next;
                 if score >= prob_beta {
                     score = search::<Search::Zw>(
                         pos,
@@ -266,7 +267,7 @@ pub fn search<Search: SearchType>(
                         depth - 4,
                         zw,
                         zw + 1,
-                    );
+                    ) << Next;
                 }
                 pos.unmake_move();
                 if score >= prob_beta {
