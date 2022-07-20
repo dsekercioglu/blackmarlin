@@ -242,6 +242,41 @@ pub fn search<Search: SearchType>(
                 }
             }
         }
+        let prob_beta = beta + 100;
+        if depth > 4
+            && !tt_entry.map_or(false, |entry| {
+                entry.depth() >= depth - 3 && entry.score() < prob_beta
+            })
+        {
+            let mut move_gen = QuiescenceSearchMoveGen::new();
+            while let Some((make_move, _)) =
+                move_gen.next(pos.board(), local_context.get_ch_table())
+            {
+                if Some(make_move) == skip_move {
+                    continue;
+                }
+                local_context.search_stack_mut()[ply as usize].move_played = Some(make_move);
+                pos.make_move(make_move);
+
+                let zw = beta >> Next;
+                let mut score = q_search(pos, local_context, shared_context, ply + 1, zw, zw + 1);
+                if score >= prob_beta {
+                    score = search::<Search::Zw>(
+                        pos,
+                        local_context,
+                        shared_context,
+                        ply + 1,
+                        depth - 4,
+                        zw,
+                        zw + 1,
+                    );
+                }
+                pos.unmake_move();
+                if score >= prob_beta {
+                    return score;
+                }
+            }
+        }
     }
 
     if tt_entry.is_none() {
