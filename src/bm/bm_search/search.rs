@@ -252,9 +252,6 @@ pub fn search<Search: SearchType>(
             while let Some((make_move, _)) =
                 move_gen.next(pos.board(), local_context.get_ch_table())
             {
-                if Some(make_move) == skip_move {
-                    continue;
-                }
                 local_context.search_stack_mut()[ply as usize].move_played = Some(make_move);
                 pos.make_move(make_move);
 
