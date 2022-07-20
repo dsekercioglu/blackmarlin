@@ -242,7 +242,7 @@ pub fn search<Search: SearchType>(
                 }
             }
         }
-        let prob_beta = beta + 100;
+        let prob_beta = beta + 200;
         if depth > 4
             && !tt_entry.map_or(false, |entry| {
                 entry.depth() >= depth - 3 && entry.score() < prob_beta
@@ -264,7 +264,7 @@ pub fn search<Search: SearchType>(
                         local_context,
                         shared_context,
                         ply + 1,
-                        depth - 4,
+                        depth / 2,
                         zw,
                         zw + 1,
                     ) << Next;
