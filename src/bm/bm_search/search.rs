@@ -13,6 +13,18 @@ use crate::bm::bm_util::t_table::EntryType::{Exact, LowerBound, UpperBound};
 use super::move_gen::OrderedMoveGen;
 use super::move_gen::QuiescenceSearchMoveGen;
 
+pub static mut RFP: i16 = 50;
+pub static mut FP: i16 = 100;
+pub static mut SEEFP: i16 = 100;
+pub static mut SEEFPC: i16 = 100;
+
+pub static mut RMP: i16 = 250;
+pub static mut QB: i16 = 200;
+pub static mut QA: i16 = 200;
+
+pub static mut HP: i32 = 64;
+pub static mut HLMR: i16 = 80;
+
 pub trait SearchType {
     const NM: bool;
     const PV: bool;
@@ -47,8 +59,8 @@ const fn do_rev_fp(depth: u32) -> bool {
 }
 
 #[inline]
-const fn rev_fp(depth: u32, improving: bool) -> i16 {
-    (depth as i16 - improving as i16) * 50
+fn rev_fp(depth: u32, improving: bool) -> i16 {
+    (depth as i16 - improving as i16) * unsafe { RFP }
 }
 
 #[inline]
@@ -76,28 +88,40 @@ const fn iir(depth: u32) -> u32 {
 }
 
 #[inline]
-const fn fp(depth: u32) -> i16 {
-    depth as i16 * 100
+fn fp(depth: u32) -> i16 {
+    depth as i16 * unsafe { FP }
 }
 
 #[inline]
-const fn see_fp(depth: u32) -> i16 {
-    depth as i16 * 100
+fn see_fp(depth: u32, is_capture: bool) -> i16 {
+    depth as i16
+        * unsafe {
+            if is_capture {
+                SEEFP
+            } else {
+                SEEFPC
+            }
+        }
 }
 
 #[inline]
-const fn hp(depth: u32) -> i32 {
-    -h_table::MAX_VALUE * ((depth * depth) as i32) / 64
+fn hp(depth: u32) -> i32 {
+    -h_table::MAX_VALUE * ((depth * depth) as i32) / unsafe { HP }
 }
 
 #[inline]
-const fn history_lmr(history: i16) -> i16 {
-    history / 80
+fn history_lmr(history: i16) -> i16 {
+    history / unsafe { HLMR }
 }
 
 #[inline]
-const fn q_see_threshold() -> i16 {
-    200
+fn q_see_alpha() -> i16 {
+    unsafe { QA }
+}
+
+#[inline]
+fn q_see_beta() -> i16 {
+    unsafe { QB }
 }
 
 pub fn search<Search: SearchType>(
@@ -357,7 +381,7 @@ pub fn search<Search: SearchType>(
 
                 local_context.search_stack_mut()[ply as usize].skip_move = None;
                 if s_score < s_beta {
-                    if s_beta + 250 <= alpha {
+                    if s_beta + unsafe { RMP } <= alpha {
                         return alpha;
                     }
                     extension = 1;
@@ -414,7 +438,9 @@ pub fn search<Search: SearchType>(
         we assume it's safe to prune this move
         */
         let do_see_prune = !Search::PV && non_mate_line && moves_seen > 0 && depth <= 7;
-        if do_see_prune && eval + see::<16>(pos.board(), make_move) + see_fp(depth) <= alpha {
+        if do_see_prune
+            && eval + see::<16>(pos.board(), make_move) + see_fp(depth, is_capture) <= alpha
+        {
             continue;
         }
 
@@ -681,10 +707,10 @@ pub fn q_search(
             SEE beta cutoff: (Koivisto)
             If SEE considerably improves evaluation above beta, we can return beta early
             */
-            if stand_pat + see - q_see_threshold() >= beta {
+            if stand_pat + see - q_see_beta() >= beta {
                 return beta;
             }
-            if stand_pat + see + q_see_threshold() <= alpha {
+            if stand_pat + see + q_see_alpha() <= alpha {
                 continue;
             }
             pos.make_move(make_move);

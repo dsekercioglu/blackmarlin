@@ -10,6 +10,8 @@ use crate::bm::bm_runner::config::{NoInfo, Run, UciInfo};
 
 use crate::bm::bm_runner::time::{TimeManagementInfo, TimeManager};
 
+use super::bm_search::search::{FP, HLMR, HP, QA, QB, RFP, RMP, SEEFP, SEEFPC};
+
 const VERSION: &str = "6.0";
 
 const POSITIONS: &[&str] = &[
@@ -101,6 +103,26 @@ impl UciAdapter {
                 println!("option name Hash type spin default 16 min 1 max 65536");
                 println!("option name Threads type spin default 1 min 1 max 255");
                 println!("option name UCI_Chess960 type check default false");
+                macro_rules! param {
+                    ($name: expr, $default: expr, $min: expr, $max: expr) => {
+                        println!(
+                            "option name {} type spin default {} min {} max {}",
+                            $name, $default, $min, $max
+                        );
+                    };
+                }
+                param!("RFP", 50, 40, 100);
+                param!("FP", 100, 50, 200);
+                param!("SEEFP", 100, 50, 200);
+                param!("SEEFPC", 100, 50, 200);
+
+                param!("RMP", 250, 50, 500);
+                param!("QB", 200, 100, 300);
+                param!("QA", 200, 100, 300);
+
+                param!("HP", 64, 32, 96);
+                param!("HLMR", 80, 40, 120);
+
                 println!("uciok");
             }
             UciCommand::IsReady => println!("readyok"),
@@ -152,6 +174,28 @@ impl UciAdapter {
                         self.chess960 = value.to_lowercase().parse::<bool>().unwrap();
                         self.bm_runner.lock().unwrap().set_chess960(self.chess960);
                     }
+                    /*
+                    pub static mut RFP: i16 = 50;
+                    pub static mut FP: i16 = 100;
+                    pub static mut SEEFP: i16 = 100;
+                    pub static mut SEEFPC: i16 = 100;
+
+                    pub static mut RMP: i16 = 250;
+                    pub static mut QB: i16 = 200;
+                    pub static mut QA: i16 = 200;
+
+                    pub static mut HP: i32 = 64;
+                    pub static mut HLMR: i16 = 80;
+                    */
+                    "RFP" => unsafe { RFP = value.parse::<i16>().unwrap() },
+                    "FP" => unsafe { FP = value.parse::<i16>().unwrap() },
+                    "SEEFP" => unsafe { SEEFP = value.parse::<i16>().unwrap() },
+                    "SEEFPC" => unsafe { SEEFPC = value.parse::<i16>().unwrap() },
+                    "RMP" => unsafe { RMP = value.parse::<i16>().unwrap() },
+                    "QB" => unsafe { QB = value.parse::<i16>().unwrap() },
+                    "QA" => unsafe { QA = value.parse::<i16>().unwrap() },
+                    "HP" => unsafe { HP = value.parse::<i32>().unwrap() },
+                    "HLMR" => unsafe { HLMR = value.parse::<i16>().unwrap() },
                     _ => {}
                 }
             }
